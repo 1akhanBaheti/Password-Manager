@@ -36,24 +36,46 @@ dependencies:
   flutter_svg: ^0.23.0+1
   hexcolor: ^3.0.1
   carousel_slider: ^4.1.1
-  encrypt: ^5.0.1
-  cryptography: ^2.0.5
   cached_network_image: ^3.2.2
   percent_indicator: ^4.2.2
   syncfusion_flutter_sliders: ^20.3.52
   url_launcher: ^6.1.6
   http: ^0.13.5
-  metadata_fetch: ^0.4.1
+  fluttertoast: ^8.1.1
+  favicon: ^1.1.0
+ 
 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   shared_preferences: ^2.0.15
+  flutter_native_splash: ^2.2.0+1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.10.0
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/password-manager.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+
+flutter_native_splash:
+  background_image: "assets/background-light.png"
+  color_dark: "#121212"
+
+  android_12:
+    image: assets/password-manager.png
+    icon_background_color: "#ffffff"
+    image_dark: assets/password-manager.png
+    icon_background_color_dark: "#121212"
+
+  web: false  
+
+
   
 
   # The "flutter_lints" package below contains a set of recommended lints to

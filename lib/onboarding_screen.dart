@@ -1,10 +1,11 @@
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:my_cred/const.dart';
+import 'package:my_cred/carousel.dart';
 import 'package:my_cred/signin_screen.dart';
 import 'package:my_cred/signup_screen.dart';
 
@@ -20,7 +21,7 @@ class Onboarding extends ConsumerWidget {
     {
       "title": "Generate secure passwords",
       "description":
-          "Stop using unsecure passwords for your online accounts, level up with OnePass. Get the most secure and difficult-to-crack passwords.",
+          "Stop using unsecure passwords for your online accounts, level up with Mycred. Get the most secure and difficult-to-crack passwords.",
       "image": "assets/onboarding5.svg"
     },
     {
@@ -46,7 +47,6 @@ class Onboarding extends ConsumerWidget {
                   Container(
                     alignment: Alignment.center,
                     child: SvgPicture.asset(
-                      
                       data[i]["image"].toString(),
                       //color: HexColor("105DFB"),
                       fit: BoxFit.cover,
@@ -84,12 +84,21 @@ class Onboarding extends ConsumerWidget {
             options: CarouselOptions(
                 autoPlay: true, viewportFraction: 1, height: 460),
           ),
+        
+   
           const Spacer(),
           GestureDetector(
             onTap: () {
-              ref.read(Const.inst).signup_signin_index = 0;
+             
               Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (ctx) => const Signup()));
+                  .push(
+                     PageRouteBuilder(
+                pageBuilder: (_, __, ___) => Signup(),
+              
+                transitionsBuilder: (_, a, b, c) =>
+                    CupertinoPageTransition(primaryRouteAnimation: a, secondaryRouteAnimation: b, child: c,linearTransition: false,),
+              )
+                  );
             },
             child: Container(
               height: 45,
@@ -109,15 +118,14 @@ class Onboarding extends ConsumerWidget {
             ),
           ),
           GestureDetector(
-            onTap: (){
-              ref.read(Const.inst).signup_signin_index = 1;
+            onTap: () {
               Navigator.of(context)
                   .push(MaterialPageRoute(builder: (ctx) => const Signin()));
             },
             child: Container(
               height: 45,
-              margin:
-                  const EdgeInsets.only(top: 0, left: 15, right: 15, bottom: 15),
+              margin: const EdgeInsets.only(
+                  top: 0, left: 15, right: 15, bottom: 15),
               decoration: BoxDecoration(
                   border: Border.all(color: HexColor("105DFB"), width: 2),
                   borderRadius: BorderRadius.circular(6)),

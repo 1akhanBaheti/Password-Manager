@@ -1,8 +1,9 @@
+import 'package:favicon/favicon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:my_cred/const.dart';
@@ -10,8 +11,9 @@ import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 class AddPassword extends ConsumerStatefulWidget {
-  const AddPassword({super.key});
-
+  const AddPassword({super.key, this.index = 0, this.edit = false});
+  final int index;
+  final bool edit;
   @override
   ConsumerState<AddPassword> createState() => _AddPasswordState();
 }
@@ -19,14 +21,49 @@ class AddPassword extends ConsumerStatefulWidget {
 class _AddPasswordState extends ConsumerState<AddPassword> {
   var sliderValue = 8.0;
   TextEditingController generate = TextEditingController();
-  TextEditingController strengthCheck = TextEditingController();
+  TextEditingController title = TextEditingController();
+  TextEditingController notes = TextEditingController();
+  TextEditingController website = TextEditingController();
+  TextEditingController email = TextEditingController();
   int navIndex = 0;
+  bool saving = false;
   double currentStrength = 0.0;
-  double currentCheckerStrength = 0.0;
-
   bool numbers = false, lowecase = false, symbols = false, uppercase = false;
+  bool titleEmpty = false,
+      emailEmpty = false,
+      wesiteUrlEmpty = false,
+      passEmpty = false,
+      notesEmpty = false;
+  @override
+  void initState() {
+    if (widget.edit) {
+      currentStrength =
+          ref.read(Const.inst).passwordAnalysis.strengths[widget.index];
+      var data = ref.read(Const.inst).passwords[widget.index];
+      generate.text = data["dec_password"];
+      generate.selection = TextSelection.fromPosition(
+          TextPosition(offset: generate.text.length));
+      title.text = data["title"] ?? '';
+      title.selection =
+          TextSelection.fromPosition(TextPosition(offset: title.text.length));
+      email.text = data["site_username"] ?? '';
+      email.selection =
+          TextSelection.fromPosition(TextPosition(offset: email.text.length));
+      website.text = data["site_url"] ?? '';
+      website.selection =
+          TextSelection.fromPosition(TextPosition(offset: website.text.length));
+      notes.text = data["description"] ?? '';
+      notes.selection =
+          TextSelection.fromPosition(TextPosition(offset: notes.text.length));
+    }
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+    Map i = {};
+    List j = [];
+
     var prov = ref.read(Const.inst);
     return Scaffold(
       appBar: AppBar(
@@ -39,17 +76,20 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
       body: SingleChildScrollView(
         child: SizedBox(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 height: 2,
-                color: prov.darkMode?Colors.grey.shade800:Colors.grey.shade300,
+                color:
+                    prov.darkMode ? Colors.grey.shade800 : Colors.grey.shade300,
                 width: MediaQuery.of(context).size.width,
               ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    margin: const EdgeInsets.only(left: 20, right: 15),
+                    margin: EdgeInsets.only(
+                        left: 20, right: 15, bottom: titleEmpty ? 20 : 0),
                     child: Text(
                       'Title',
                       style: GoogleFonts.ptSans(
@@ -57,21 +97,58 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                     ),
                   ),
                   const Spacer(),
-                  SizedBox(
-                      width: MediaQuery.of(context).size.width - 200,
-                      child: TextFormField(
-                        style: GoogleFonts.ptSans(color: Colors.grey.shade500),
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.only(bottom: 11)),
-                        maxLines: null,
-                        textAlignVertical: TextAlignVertical.bottom,
-                      )),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          width: MediaQuery.of(context).size.width - 200,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (value.isNotEmpty && titleEmpty) {
+                                setState(() {
+                                  titleEmpty = false;
+                                });
+                              }
+                              if (title.text.trim().length == 1 ||
+                                  title.text.trim().length == 0)
+                                setState(() {});
+                            },
+                            controller: title,
+                            style:
+                                GoogleFonts.ptSans(color: Colors.grey.shade500),
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(bottom: 11)),
+                            maxLines: null,
+                            textAlignVertical: TextAlignVertical.bottom,
+                          )),
+                      titleEmpty
+                          ? Container(
+                              margin: const EdgeInsets.only(
+                                left: 0,
+                                right: 15,
+                              ),
+                              child: Text(
+                                '*required',
+                                style: GoogleFonts.ptSans(
+                                    color: Colors.red,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            )
+                          : Container(),
+                    ],
+                  ),
                   Container(
-                      margin: const EdgeInsets.only(right: 20, left: 20),
+                      margin: EdgeInsets.only(
+                          right: 20, left: 20, bottom: titleEmpty ? 20 : 0),
                       height: 18,
                       width: 18,
                       decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: title.text.isNotEmpty
+                              ? Colors.green
+                              : Colors.grey,
                           borderRadius: BorderRadius.circular(100)),
                       child: const Icon(
                         Icons.done,
@@ -92,9 +169,17 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                     ),
                   ),
                   const Spacer(),
-                  SizedBox(
+                  Container(
+                      margin: const EdgeInsets.only(top: 10),
                       width: MediaQuery.of(context).size.width - 200,
                       child: TextFormField(
+                        onChanged: (value) {
+                          if (email.text.trim().length == 1 ||
+                              email.text.trim().isEmpty) {
+                            setState(() {});
+                          }
+                        },
+                        controller: email,
                         style: GoogleFonts.ptSans(color: Colors.grey.shade500),
                         decoration: const InputDecoration(
                             contentPadding: EdgeInsets.only(bottom: 11)),
@@ -106,7 +191,9 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                       height: 18,
                       width: 18,
                       decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: email.text.isNotEmpty
+                              ? Colors.green
+                              : Colors.grey,
                           borderRadius: BorderRadius.circular(100)),
                       child: const Icon(
                         Icons.done,
@@ -119,7 +206,11 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    margin: const EdgeInsets.only(left: 20, right: 15),
+                    margin:  EdgeInsets.only(
+                      left: 20,
+                      right: 15,
+                      bottom: wesiteUrlEmpty ? 20 : 0
+                    ),
                     child: Text(
                       'website',
                       style: GoogleFonts.ptSans(
@@ -127,21 +218,52 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                     ),
                   ),
                   const Spacer(),
-                  SizedBox(
-                      width: MediaQuery.of(context).size.width - 200,
-                      child: TextFormField(
-                        style: GoogleFonts.ptSans(color: Colors.grey.shade500),
-                        decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.only(bottom: 11)),
-                        maxLines: null,
-                        textAlignVertical: TextAlignVertical.bottom,
-                      )),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          width: MediaQuery.of(context).size.width - 200,
+                          child: TextFormField(
+                            onChanged: (value) {
+                              if (website.text.trim().length == 1 ||
+                                  website.text.trim().isEmpty) {
+                                setState(() {});
+                              }
+                            },
+                            controller: website,
+                            style:
+                                GoogleFonts.ptSans(color: Colors.grey.shade500),
+                            decoration: const InputDecoration(
+                                contentPadding: EdgeInsets.only(bottom: 11)),
+                            maxLines: null,
+                            textAlignVertical: TextAlignVertical.bottom,
+                          )),
+                      !website.text.startsWith("https://") && wesiteUrlEmpty
+                          ? Container(
+                              margin: const EdgeInsets.only(
+                                left: 0,
+                                right: 15,
+                              ),
+                              child: Text(
+                                '*Not valid',
+                                style: GoogleFonts.ptSans(
+                                    color: Colors.red,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            )
+                          : Container(),
+                    ],
+                  ),
                   Container(
-                      margin: const EdgeInsets.only(right: 20, left: 20),
+                      margin:  EdgeInsets.only(right: 20, left: 20,bottom: wesiteUrlEmpty ? 20 : 0),
                       height: 18,
                       width: 18,
                       decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: website.text.isNotEmpty
+                              ? Colors.green
+                              : Colors.grey,
                           borderRadius: BorderRadius.circular(100)),
                       child: const Icon(
                         Icons.done,
@@ -162,9 +284,17 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                     ),
                   ),
                   const Spacer(),
-                  SizedBox(
+                  Container(
+                      margin: const EdgeInsets.only(top: 10),
                       width: MediaQuery.of(context).size.width - 200,
                       child: TextFormField(
+                        controller: notes,
+                        onChanged: (value) {
+                          if (notes.text.trim().length == 1 ||
+                              notes.text.trim().isEmpty) {
+                            setState(() {});
+                          }
+                        },
                         style: GoogleFonts.ptSans(color: Colors.grey.shade500),
                         decoration: const InputDecoration(
                             contentPadding: EdgeInsets.only(bottom: 11)),
@@ -172,17 +302,19 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                         textAlignVertical: TextAlignVertical.bottom,
                       )),
                   Container(
-                      margin: const EdgeInsets.only(right: 20, left: 20),
-                      height: 18,
-                      width: 18,
-                      decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(100)),
-                      child: const Icon(
-                        Icons.done,
-                        color: Colors.white,
-                        size: 14,
-                      ))
+                    margin: const EdgeInsets.only(right: 20, left: 20),
+                    height: 18,
+                    width: 18,
+                    decoration: BoxDecoration(
+                        color:
+                            notes.text.isNotEmpty ? Colors.green : Colors.grey,
+                        borderRadius: BorderRadius.circular(100)),
+                    child: const Icon(
+                      Icons.done,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  )
                 ],
               ),
               Container(
@@ -192,6 +324,7 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                 width: MediaQuery.of(context).size.width,
               ),
               Container(
+                alignment: Alignment.center,
                 padding: const EdgeInsets.all(15),
                 child: Text(
                   'Password',
@@ -205,6 +338,19 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                 margin: const EdgeInsets.only(left: 20, right: 20, top: 5),
                 child: TextFormField(
                   controller: generate,
+                  onChanged: (value) {
+                    if (passEmpty && value.isNotEmpty) {
+                      setState(() {
+                        passEmpty = false;
+                      });
+                    }
+                    if (value.isNotEmpty) {
+                      setState(() {
+                        currentStrength =
+                            prov.estimateBruteforceStrength(value);
+                      });
+                    }
+                  },
                   decoration: InputDecoration(
                     suffixIcon: InkWell(
                       onTap: () {
@@ -216,7 +362,7 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                           padding: const EdgeInsets.all(11),
                           child: SvgPicture.asset(
                             "assets/nav1.svg",
-                            color: prov.darkMode?HexColor("105DFB"):null,
+                            color: prov.darkMode ? HexColor("105DFB") : null,
                           )),
                     ),
                     hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -255,6 +401,21 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                   width: MediaQuery.of(context).size.width - 20,
                 ),
               ),
+              passEmpty
+                  ? Container(
+                      margin: const EdgeInsets.only(
+                        left: 20,
+                        right: 15,
+                      ),
+                      child: Text(
+                        '*required',
+                        style: GoogleFonts.ptSans(
+                            color: Colors.red,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  : Container(),
               const SizedBox(
                 height: 20,
               ),
@@ -419,7 +580,97 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () async {
+                      if (saving) return;
+                      if (title.text.isEmpty ||
+                          generate.text.isEmpty ||
+                          (website.text.isNotEmpty &&
+                              !website.text.startsWith("https://"))) {
+                        if ((website.text.isNotEmpty &&
+                            !website.text.startsWith("https://"))) {
+                          wesiteUrlEmpty = true;
+                        }
+                        if (generate.text.isEmpty) {
+                          passEmpty = true;
+                        }
+                        if (title.text.isEmpty) {
+                          titleEmpty = true;
+                        }
+                        setState(() {});
+                        return;
+                      } else {
+                        setState(() {
+                          saving = true;
+                        });
+                        if (widget.edit) {
+                          var url;
+                          if (website.text.isNotEmpty)
+                            url = await FaviconFinder.getBest(website.text);
+                          await prov.editPassword({
+                            "title": title.text,
+                            "password": generate.text,
+                            if (notes.text.isNotEmpty)
+                              "description": notes.text,
+                            if (email.text.isNotEmpty)
+                              "site_username": email.text,
+                            if (website.text.isNotEmpty)
+                              "site_url": website.text,
+                            if (website.text.isNotEmpty && url != null)
+                              "meta": {"url": url.url},
+                          }, widget.index).then((value) {
+                            Fluttertoast.showToast(
+                                  msg: 'Updated!',
+                                  textColor: Colors.black,
+                                  backgroundColor: Colors.white);
+                            Navigator.pop(context);
+                          }).catchError((error) {
+                            Fluttertoast.showToast(
+                                  msg: 'Something went wrong!',
+                                  textColor: Colors.black,
+                                  backgroundColor: Colors.white);
+                          
+                          });
+                          setState(() {
+                            saving = false;
+                          });
+                        } else {
+                          var url;
+                          if (website.text.isNotEmpty)
+                            url = await FaviconFinder.getBest(website.text);
+
+                          print(url?.url);
+                          await prov.savePassword({
+                            "title": title.text,
+                            "password": generate.text,
+                            if (notes.text.isNotEmpty)
+                              "description": notes.text,
+                            if (email.text.isNotEmpty)
+                              "site_username": email.text,
+                            if (website.text.isNotEmpty)
+                              "site_url": website.text,
+                            if (website.text.isNotEmpty && url != null)
+                              "meta": {"url": url.url},
+                          }).then((value) {
+                             Fluttertoast.showToast(
+                                  msg: 'Saved!',
+                                  textColor: Colors.black,
+                                  backgroundColor: Colors.white);
+                      
+                            Navigator.pop(context);
+                          }).catchError((error) {
+                            print(error.toString());
+                            Fluttertoast.showToast(
+                                  msg: 'Something went wrong!',
+                                  textColor: Colors.black,
+                                  backgroundColor: Colors.white);
+                          });
+
+                          setState(() {
+                            saving = false;
+                          });
+                        }
+                      }
+                    },
                     child: Container(
                       height: 45,
                       alignment: Alignment.center,
@@ -429,15 +680,25 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                       ),
                       width: MediaQuery.of(context).size.width * 0.4,
                       margin: const EdgeInsets.all(20),
-                      child: Text(
-                        "Save password",
-                        style: GoogleFonts.ptSans(
-                            color: Colors.white, fontSize: 18),
-                      ),
+                      child: saving
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                backgroundColor: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : Text(
+                              "Save password",
+                              style: GoogleFonts.ptSans(
+                                  color: Colors.white, fontSize: 18),
+                            ),
                     ),
                   ),
                 ],
               ),
+             
             ],
           ),
         ),

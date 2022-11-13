@@ -7,11 +7,22 @@ import 'package:my_cred/const.dart';
 import 'package:my_cred/home_screen.dart';
 import 'package:my_cred/signup_screen.dart';
 
-class Signin extends ConsumerWidget {
+class Signin extends ConsumerStatefulWidget {
   const Signin({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Signin> createState() => _SigninState();
+}
+
+class _SigninState extends ConsumerState<Signin> {
+  bool loading = false;
+  TextEditingController email = TextEditingController();
+  TextEditingController password = TextEditingController();
+  bool emailEmpty = false;
+  bool passwordEmpty = false;
+  @override
+  Widget build(BuildContext context) {
+    var prov = ref.read(Const.inst);
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -60,19 +71,27 @@ class Signin extends ConsumerWidget {
               child: Text(
                 'Email',
                 style: GoogleFonts.lato(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal),
+                    fontSize: 18, fontWeight: FontWeight.normal),
               ),
             ),
             Container(
-              height: 45,
-              margin: const EdgeInsets.only(
-                  top: 0, left: 15, bottom: 15, right: 15),
+              height: 50,
+              margin: const EdgeInsets.only(top: 0, left: 15, right: 15),
               child: TextFormField(
+                controller: email,
+                onChanged: (value) {
+                  if (value.isNotEmpty && emailEmpty) {
+                    setState(() {
+                      emailEmpty = false;
+                    });
+                  }
+                },
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(32.0)),
+                    borderRadius: BorderRadius.all(Radius.circular(6.0)),
+                  ),
+                  errorBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(6.0)),
                   ),
                   enabledBorder: const OutlineInputBorder(
                     borderSide: BorderSide(
@@ -87,22 +106,43 @@ class Signin extends ConsumerWidget {
                 ),
               ),
             ),
+            emailEmpty
+                ? Container(
+                    margin:
+                        const EdgeInsets.only(left: 15, bottom: 15, right: 15),
+                    child: Text(
+                      '*required',
+                      style: GoogleFonts.lato(
+                          fontSize: 16,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : const SizedBox(
+                    height: 20,
+                  ),
             Container(
               margin:
                   const EdgeInsets.only(top: 5, left: 15, bottom: 5, right: 15),
               child: Text(
                 'Password',
                 style: GoogleFonts.lato(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal),
+                    fontSize: 18, fontWeight: FontWeight.normal),
               ),
             ),
             Container(
-              height: 45,
-              margin: const EdgeInsets.only(
-                  top: 0, left: 15, bottom: 20, right: 15),
+              height: 50,
+              margin:
+                  const EdgeInsets.only(top: 0, left: 15, bottom: 0, right: 15),
               child: TextFormField(
+                onChanged: (value) {
+                  if (value.isNotEmpty && passwordEmpty) {
+                    setState(() {
+                      passwordEmpty = false;
+                    });
+                  }
+                },
+                controller: password,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(32.0)),
@@ -120,32 +160,76 @@ class Signin extends ConsumerWidget {
                 ),
               ),
             ),
+            passwordEmpty
+                ? Container(
+                    margin:
+                        const EdgeInsets.only(left: 15, bottom: 20, right: 15),
+                    child: Text(
+                      '*required',
+                      style: GoogleFonts.lato(
+                          fontSize: 16,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : const SizedBox(
+                    height: 20,
+                  ),
             GestureDetector(
-              onTap: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (ctx) => const Homepage()),
-                    (route) => false);
+              onTap: () async {
+                if (loading) return;
+                if (email.text.isEmpty || password.text.isEmpty) {
+                  if (email.text.isEmpty) emailEmpty = true;
+                  if (password.text.isEmpty) passwordEmpty = true;
+
+                  setState(() {});
+                } else {
+                  setState(() {
+                    loading = true;
+                  });
+                  await prov
+                      .login(email: email.text, password: password.text)
+                      .then((value) {
+                    prov.getAllPasswords();
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (ctx) => const Homepage()),
+                        (route) => false);
+                  }).catchError((error) {
+                    setState(() {
+                      loading = false;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                         SnackBar(content: Text("Try again later!")));
+                  });
+                }
               },
               child: Container(
-                height: 45,
-                margin: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                    color: HexColor("105DFB"),
-                    borderRadius: BorderRadius.circular(6)),
-                alignment: Alignment.center,
-                width: MediaQuery.of(context).size.width,
-                child: Text(
-                  'Login',
-                  style: GoogleFonts.lato(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500),
-                ),
-              ),
+                  height: 45,
+                  margin: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                      color: HexColor("105DFB"),
+                      borderRadius: BorderRadius.circular(6)),
+                  alignment: Alignment.center,
+                  width: MediaQuery.of(context).size.width,
+                  child: !loading
+                      ? Text(
+                          'Login',
+                          style: GoogleFonts.lato(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500),
+                        )
+                      : const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            backgroundColor: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        )),
             ),
             InkWell(
               onTap: () {
-                ref.read(Const.inst).signup_signin_index = 0;
                 Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (ctx) => const Signup()));
               },

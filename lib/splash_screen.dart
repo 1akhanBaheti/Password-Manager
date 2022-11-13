@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:my_cred/const.dart';
+import 'package:my_cred/home_screen.dart';
 import 'package:my_cred/onboarding_screen.dart';
 
 class Splash extends ConsumerStatefulWidget {
@@ -14,9 +16,17 @@ class Splash extends ConsumerStatefulWidget {
 class _SplashState extends ConsumerState<Splash> {
   @override
   void initState() {
-    Future.delayed(const Duration(seconds: 2)).then((value) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: ((context) =>  Onboarding())));
+    Future.delayed(const Duration(milliseconds: 1200)).then((value) {
+      if(Const.isLogged)
+      {
+          Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: ((context) => const Homepage())));
+      }
+      else
+      {
+          Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: ((context) => Onboarding())));
+      }
     });
     super.initState();
   }

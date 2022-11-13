@@ -1,12 +1,15 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:my_cred/const.dart';
 import 'package:my_cred/add_password.dart';
 import 'package:my_cred/edit_password.dart';
+import 'package:my_cred/enums.dart';
 import 'package:my_cred/profile.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
@@ -24,6 +27,7 @@ class _HomepageState extends ConsumerState<Homepage>
   var sliderValue = 8.0;
   TextEditingController generate = TextEditingController();
   TextEditingController strengthCheck = TextEditingController();
+  TextEditingController search = TextEditingController();
   int navIndex = 0;
   double currentStrength = 0.0;
   double currentCheckerStrength = 0.0;
@@ -45,11 +49,11 @@ class _HomepageState extends ConsumerState<Homepage>
         height: MediaQuery.of(context).size.height,
         child: Stack(
           children: [
-            navIndex == 0
+            navIndex == 0 && prov.getAllPasswordStatus == Status.success
                 ? SizedBox(
                     height: MediaQuery.of(context).size.height - 70,
                     child: passwords())
-                : navIndex == 1
+                : navIndex == 1 && prov.getAllPasswordStatus == Status.success
                     ? SizedBox(
                         height: MediaQuery.of(context).size.height - 70,
                         child: security())
@@ -59,11 +63,33 @@ class _HomepageState extends ConsumerState<Homepage>
                                 top: MediaQuery.of(context).padding.top),
                             height: MediaQuery.of(context).size.height - 70,
                             child: generator())
-                        : Container(
-                            margin: EdgeInsets.only(
-                                top: MediaQuery.of(context).padding.top),
-                            height: MediaQuery.of(context).size.height - 70,
-                            child: const Profile()),
+                        : navIndex == 3
+                            ? Container(
+                                margin: EdgeInsets.only(
+                                    top: MediaQuery.of(context).padding.top),
+                                height: MediaQuery.of(context).size.height - 70,
+                                child: const Profile())
+                            : prov.getAllPasswordStatus == Status.failed
+                                ? Center(
+                                    child: Text(
+                                      'Something went wrong!',
+                                      style: GoogleFonts.ptSans(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  )
+                                : prov.getAllPasswordStatus == Status.loading
+                                    ? Center(
+                                        child: SizedBox(
+                                          height: 15,
+                                          width: 15,
+                                          child: CircularProgressIndicator(
+                                            color: HexColor("105DFB"),
+                                            strokeWidth: 3,
+                                          ),
+                                        ),
+                                      )
+                                    : Container(),
             Positioned(
               bottom: 0,
               child: Container(
@@ -134,11 +160,11 @@ class _HomepageState extends ConsumerState<Homepage>
               right: 5,
               bottom: 15,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.only(left:8,right: 8,bottom: 8),
                 decoration: BoxDecoration(
                     color: prov.darkMode ? Colors.black : Colors.white,
                     borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(40))),
+                        bottomLeft: Radius.circular(40), topLeft: Radius.circular(25), bottomRight: Radius.circular(40),)),
                 child: Container(
                   height: 60,
                   width: 60,
@@ -164,341 +190,497 @@ class _HomepageState extends ConsumerState<Homepage>
   }
 
   passwords() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 15,
-              left: 15,
-              right: 15),
-          child: Text(
-            'Password',
-            style:
-                GoogleFonts.ptSans(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.only(top: 15, left: 15, right: 15),
-          child: TextFormField(
-              cursorColor: const Color.fromRGBO(16, 93, 251, 1),
-              decoration: InputDecoration(
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Colors.grey.shade400,
+    var prov = ref.watch(Const.inst);
+    return prov.passwords.isNotEmpty
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 15,
+                    left: 15,
+                    right: 15),
+                child: Text(
+                  'Password',
+                  style: GoogleFonts.ptSans(
+                      fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                hintText: 'search',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
-                filled: true,
-                fillColor: const Color.fromRGBO(16, 93, 251, 0.1),
-                border: const OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
+              ),
+              Container(
+                margin: const EdgeInsets.only(top: 15, left: 15, right: 15),
+                child: TextFormField(
+                    controller: search,
+                    onChanged: (value) {
+                      prov.search(value.trim());
+                    },
+                    cursorColor: const Color.fromRGBO(16, 93, 251, 1),
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.grey.shade400,
+                      ),
+                      hintText: 'search',
+                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                      filled: true,
+                      fillColor: const Color.fromRGBO(16, 93, 251, 0.1),
+                      border: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                      ),
+                    )),
+              ),
+              Expanded(
+                  child: Container(
+                    color: prov.darkMode?Colors.black:Colors.white,
+                    child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: search.text.trim().isEmpty
+                            ? prov.passwords.length
+                            : prov.searchedList.length,
+                        itemBuilder: (ctx, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (ctx) => EditPassword(index: index),
+                              ));
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 5.0),
+                              // ignore: sort_child_properties_last
+                              child: ListTile(
+                                  title: Text(
+                                    search.text.trim().isEmpty
+                                        ? prov.passwords[index]["title"]
+                                        : prov.searchedList[index]["title"],
+                                    style: GoogleFonts.lato(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w500),
+                                  ),
+                                  leading: Container(
+                                      margin: const EdgeInsets.only(right: 5.0),
+                                      height: 50,
+                                      width: 50,
+                                      decoration: BoxDecoration(
+                                          image: 
+                                          search.text.isEmpty?
+                                          (
+                                          prov.passwords[index]["meta"]["url"] != null
+                                              ? DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image: CachedNetworkImageProvider(
+                                                      prov.passwords[index]
+                                                          ["meta"]["url"]))
+                                              : null):
+                                              prov.searchedList[index]["meta"]["url"] != null
+                                              ? DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image: CachedNetworkImageProvider(
+                                                      prov.searchedList[index]
+                                                          ["meta"]["url"])):null,
+                                          borderRadius:
+                                              BorderRadius.circular(60)),
+                                      child: 
+                                      
+                                       search.text.isEmpty?(prov.passwords[index]["meta"]["url"] ==
+                                              null
+                                          ? Icon(Icons.password_outlined)
+                                          : null):(
+                                            prov.searchedList[index]["meta"]["url"] ==
+                                              null
+                                          ? Icon(Icons.password_outlined)
+                                          : null
+                                          )
+                                          
+                                          ),
+                                  subtitle: Text(
+                                      search.text.trim().isEmpty ? (prov.passwords[index]["site_username"] ?? prov.passwords[index]["dec_password"] ):(prov.searchedList[index]["site_username"] ?? prov.searchedList[index]["dec_password"] ),
+                                      style: GoogleFonts.ptSans(fontSize: 13.5, color: Colors.grey.shade500)),
+                                  trailing: GestureDetector(
+                                    onTap: () {
+                                        Clipboard.setData(
+                                    ClipboardData(text:prov.passwords[index]["dec_password"] ));
+                                      Fluttertoast.showToast(
+                                          msg: 'copied!',
+                                          textColor: Colors.black,
+                                          backgroundColor: Colors.white);
+                                    },
+                                    child: Container(
+                                        margin: const EdgeInsets.only(right: 10),
+                                        height: 20,
+                                        width: 20,
+                                        child: SvgPicture.asset(
+                                          "assets/nav1.svg",
+                                          color: !prov.darkMode
+                                              ? Colors.black
+                                              : Colors.white,
+                                        )),
+                                  )),
+                            ),
+                          );
+                        }),
+                  ))
+            ],
+          )
+        : Column(
+            children: [
+              Spacer(),
+              Center(
+                child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.25,
+                    width: MediaQuery.of(context).size.width * 0.35,
+                    child: SvgPicture.asset(
+                      "assets/empty-box.svg",
+                    )),
+              ),
+              Container(
+                child: Text(
+                  'Your Password List is Empty !',
+                  style: GoogleFonts.ptSans(
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                ),
-              )),
-        ),
-        Expanded(
-            child: ListView.builder(
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                itemCount: 15,
-                itemBuilder: (ctx, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: ListTile(
-                        title: Text(
-                          'Netflix',
-                          style: GoogleFonts.lato(
-                              fontSize: 17, fontWeight: FontWeight.w500),
-                        ),
-                        leading: Container(
-                          margin: const EdgeInsets.only(right: 5.0),
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                              image: DecorationImage(
-                                  fit: BoxFit.cover,
-                                  image:
-                                      Image.asset("assets/netflix.png").image),
-                              color: Colors.grey.shade300,
-                              borderRadius: BorderRadius.circular(60)),
-                        ),
-                        subtitle: Text('lakhan@gmail.com',
-                            style: GoogleFonts.ptSans(
-                                fontSize: 13.5, color: Colors.grey.shade500)),
-                        trailing: Container(
-                            margin: const EdgeInsets.only(right: 10),
-                            height: 20,
-                            width: 20,
-                            child: SvgPicture.asset("assets/nav1.svg"))),
-                  );
-                }))
-      ],
-    );
+              ),
+              Spacer(),
+            ],
+          );
   }
 
   security() {
-    return MediaQuery.removePadding(
-      context: context,
-      removeTop: true,
-      child: ListView(
-        shrinkWrap: true,
-        physics: const BouncingScrollPhysics(),
-        //crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 15,
-                left: 15,
-                right: 15),
-            child: Text(
-              'Security',
-              style:
-                  GoogleFonts.ptSans(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(
-            height: 40,
-          ),
-          Center(
-              child: CircularPercentIndicator(
-            lineWidth: 10,
-            radius: 60,
-            percent: 0.82,
-            animation: true,
-            circularStrokeCap: CircularStrokeCap.round,
-            center: Text(
-              '82%',
-              style:
-                  GoogleFonts.ptSans(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            progressColor: Colors.deepPurple,
-          )),
-          Container(
-            margin: const EdgeInsets.only(top: 5),
-            alignment: Alignment.center,
-            child: Text(
-              '82% secured',
-              style:
-                  GoogleFonts.ptSans(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(
-            height: 20,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Container(
-                height: 70,
-                width: 70,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade300)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '82',
-                        style: GoogleFonts.ptSans(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Safe',
-                        style: GoogleFonts.ptSans(
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                height: 70,
-                width: 70,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade300)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '20',
-                        style: GoogleFonts.ptSans(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Weak',
-                        style: GoogleFonts.ptSans(
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                height: 70,
-                width: 70,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade300)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '12',
-                        style: GoogleFonts.ptSans(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Risk',
-                        style: GoogleFonts.ptSans(
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Container(
-            margin: const EdgeInsets.only(top: 20, left: 20, bottom: 10),
-            child: Text(
-              'Analysis',
-              style:
-                  GoogleFonts.ptSans(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-          ListView.builder(
+    var prov = ref.read(Const.inst);
+    return prov.passwords.isNotEmpty
+        ? MediaQuery.removePadding(
+            context: context,
+            removeTop: true,
+            child: ListView(
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 15,
-              itemBuilder: (ctx, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (ctx) => const EditPassword()));
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.only(top: 8, bottom: 10),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              margin:
-                                  const EdgeInsets.only(left: 20, right: 15),
-                              child: Column(
+              physics: const BouncingScrollPhysics(),
+              //crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 15,
+                      left: 15,
+                      right: 15),
+                  child: Text(
+                    'Security',
+                    style: GoogleFonts.ptSans(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(
+                  height: 40,
+                ),
+                Center(
+                    child: CircularPercentIndicator(
+                  lineWidth: 10,
+                  radius: 60,
+                  percent: prov.passwordAnalysis.securedPercentage,
+                  animation: true,
+                  backgroundColor: Colors.grey.shade200,
+                  circularStrokeCap: CircularStrokeCap.round,
+                  center: Text(
+                    "${(prov.passwordAnalysis.securedPercentage * 100).round()}%",
+                    style: GoogleFonts.ptSans(
+                        fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  progressColor: Colors.green,
+                )),
+                Container(
+                  margin: const EdgeInsets.only(top: 5),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "${(prov.passwordAnalysis.securedPercentage * 100).round()}% secured",
+                    style: GoogleFonts.ptSans(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Container(
+                      height: 70,
+                      width: 70,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade300)),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            alignment: Alignment.center,
+                            child: Text(
+                              prov.passwordAnalysis.safe.toString(),
+                              style: GoogleFonts.ptSans(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Safe',
+                              style: GoogleFonts.ptSans(
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      height: 70,
+                      width: 70,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade300)),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            alignment: Alignment.center,
+                            child: Text(
+                              prov.passwordAnalysis.weak.toString(),
+                              style: GoogleFonts.ptSans(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Weak',
+                              style: GoogleFonts.ptSans(
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      height: 70,
+                      width: 70,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade300)),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            alignment: Alignment.center,
+                            child: Text(
+                              prov.passwordAnalysis.risk.toString(),
+                              style: GoogleFonts.ptSans(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 5),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Risk',
+                              style: GoogleFonts.ptSans(
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  margin: const EdgeInsets.only(top: 20, left: 20, bottom: 10),
+                  child: Text(
+                    'Analysis',
+                    style: GoogleFonts.ptSans(
+                        fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: prov.passwords.length,
+                    itemBuilder: (ctx, index) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (ctx) => EditPassword(index: index),
+                          ));
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.only(top: 8, bottom: 10),
+                          child: Column(
+                            children: [
+                              Row(
                                 children: [
                                   Container(
-                                    margin: const EdgeInsets.only(right: 5.0),
-                                    height: 50,
-                                    width: 50,
-                                    decoration: BoxDecoration(
-                                        image: DecorationImage(
-                                            fit: BoxFit.cover,
-                                            image: Image.asset(
-                                                    "assets/netflix.png")
-                                                .image),
-                                        color: Colors.grey.shade300,
-                                        borderRadius:
-                                            BorderRadius.circular(60)),
+                                    margin: const EdgeInsets.only(
+                                        left: 20, right: 15),
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                            margin: const EdgeInsets.only(
+                                                right: 5.0),
+                                            height: 50,
+                                            width: 50,
+                                            decoration: BoxDecoration(
+                                                image: prov.passwords[index]
+                                                            ["meta"]["url"] !=
+                                                        null
+                                                    ? DecorationImage(
+                                                        fit: BoxFit.cover,
+                                                        image: CachedNetworkImageProvider(
+                                                            prov.passwords[index]
+                                                                    ["meta"]
+                                                                ["url"]))
+                                                    : null,
+                                                borderRadius:
+                                                    BorderRadius.circular(60)),
+                                            child: prov.passwords[index]["meta"]
+                                                        ["url"] ==
+                                                    null
+                                                ? Icon(Icons.password_outlined)
+                                                : null),
+                                      ],
+                                    ),
                                   ),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width -
+                                                130,
+                                        child: Text(
+                                          prov.passwords[index]["title"],
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.lato(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.w500),
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width -
+                                                130,
+                                        child: Text(
+                                            prov.passwords[index]
+                                                ["dec_password"],
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.ptSans(
+                                                fontSize: 13.5,
+                                                color: Colors.grey.shade500)),
+                                      ),
+                                      const SizedBox(
+                                        height: 5,
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                      margin: const EdgeInsets.only(right: 20),
+                                      height: 20,
+                                      width: 20,
+                                      child: const Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Colors.grey,
+                                      ))
                                 ],
                               ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Netflix',
-                                  style: GoogleFonts.lato(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w500),
+                              Container(
+                                alignment: Alignment.center,
+                                child: Row(
+                                  children: [
+                                    const SizedBox(
+                                      width: 30,
+                                    ),
+                                    Text(
+                                      prov.passwordAnalysis
+                                          .securityTitles[index],
+                                      style: GoogleFonts.lato(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                    const SizedBox(
+                                      width: 25,
+                                    ),
+                                    LinearPercentIndicator(
+                                      percent: prov
+                                          .passwordAnalysis.strengths[index],
+                                      progressColor: prov.passwordAnalysis
+                                                  .securityTitles[index] ==
+                                              "Risk"
+                                          ? Colors.red
+                                          : prov.passwordAnalysis
+                                                      .securityTitles[index] ==
+                                                  "Weak"
+                                              ? Colors.amber
+                                              : prov.passwordAnalysis.strengths[
+                                                              index] >=
+                                                          0.51 &&
+                                                      prov.passwordAnalysis
+                                                                  .strengths[
+                                                              index] <=
+                                                          0.75
+                                                  ? HexColor("105DFB")
+                                                  : Colors.green,
+                                      width: MediaQuery.of(context).size.width -
+                                          100,
+                                    )
+                                  ],
                                 ),
-                                const SizedBox(
-                                  height: 5,
-                                ),
-                                Text('Cz&nW!HBqVw#',
-                                    style: GoogleFonts.ptSans(
-                                        fontSize: 13.5,
-                                        color: Colors.grey.shade500)),
-                                const SizedBox(
-                                  height: 5,
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Container(
-                                margin: const EdgeInsets.only(right: 20),
-                                height: 20,
-                                width: 20,
-                                child: const Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: Colors.grey,
-                                ))
-                          ],
-                        ),
-                        Container(
-                          alignment: Alignment.center,
-                          child: Row(
-                            children: [
-                              const SizedBox(
-                                width: 30,
-                              ),
-                              Text(
-                                'Risk',
-                                style: GoogleFonts.lato(
-                                    fontSize: 15, fontWeight: FontWeight.w500),
-                              ),
-                              const SizedBox(
-                                width: 25,
-                              ),
-                              LinearPercentIndicator(
-                                width: MediaQuery.of(context).size.width - 100,
                               )
                             ],
                           ),
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              })
-        ],
-      ),
-    );
+                        ),
+                      );
+                    })
+              ],
+            ),
+          )
+        : Column(
+            children: [
+              Spacer(),
+              Center(
+                child: SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.25,
+                    width: MediaQuery.of(context).size.width * 0.35,
+                    child: SvgPicture.asset(
+                      "assets/empty-box.svg",
+                    )),
+              ),
+              Container(
+                child: Text(
+                  'Your Password List is Empty !\n Add Some to Get Security Analysis',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.ptSans(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Spacer(),
+            ],
+          );
   }
 
   generator() {
@@ -562,9 +744,13 @@ class _HomepageState extends ConsumerState<Homepage>
                         controller: generate,
                         decoration: InputDecoration(
                           suffixIcon: InkWell(
-                            onTap: () {
+                            onTap: () async {
                               Clipboard.setData(
                                   ClipboardData(text: generate.text));
+                              Fluttertoast.showToast(
+                                  msg: 'copied!',
+                                  textColor: Colors.black,
+                                  backgroundColor: Colors.white);
                             },
                             child: Container(
                                 height: 20,
@@ -572,7 +758,8 @@ class _HomepageState extends ConsumerState<Homepage>
                                 padding: const EdgeInsets.all(11),
                                 child: SvgPicture.asset(
                                   "assets/nav1.svg",
-                                  color: prov.darkMode?HexColor("105DFB"):null,
+                                  color:
+                                      prov.darkMode ? HexColor("105DFB") : null,
                                 )),
                           ),
                           hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -824,7 +1011,21 @@ class _HomepageState extends ConsumerState<Homepage>
             },
             decoration: InputDecoration(
               suffixIcon: IconButton(
-                  onPressed: () => Clipboard.getData("text/plain"),
+                  onPressed: () async {
+                    await Clipboard.getData("text/plain").then((value) {
+                      if (value != null){
+                        strengthCheck.text = value.text!;
+                  setState(() {
+                currentCheckerStrength =
+                    ref.read(Const.inst).estimateBruteforceStrength(strengthCheck.text);
+              });
+                      } 
+                    });
+                         Fluttertoast.showToast(
+                                  msg: 'Pasted!',
+                                  textColor: Colors.black,
+                                  backgroundColor: Colors.white);
+                  },
                   icon: const Icon(Icons.paste_outlined)),
               hintStyle: TextStyle(color: Colors.grey.shade400),
               filled: true,

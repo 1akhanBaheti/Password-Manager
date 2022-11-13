@@ -15,9 +15,17 @@ class Signup extends ConsumerStatefulWidget {
 }
 
 class _SignupState extends ConsumerState<Signup> {
+  TextEditingController name = TextEditingController();
+  TextEditingController email = TextEditingController();
+  TextEditingController password = TextEditingController();
+
+  bool nameEmpty = false,
+      emailEmpty = false,
+      passwordEmpty = false,
+      loading = false;
   @override
   Widget build(BuildContext context) {
-    //var prov = ref.watch(Const.inst);
+    var prov = ref.watch(Const.inst);
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -33,7 +41,8 @@ class _SignupState extends ConsumerState<Signup> {
               child: Container(
                 height: 60,
                 width: 60,
-                margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                margin:
+                    EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                 child: SvgPicture.asset("assets/splash.svg"),
               ),
             ),
@@ -65,17 +74,23 @@ class _SignupState extends ConsumerState<Signup> {
               child: Text(
                 'Name',
                 style: GoogleFonts.lato(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal),
+                    fontSize: 18, fontWeight: FontWeight.normal),
               ),
             ),
             Container(
-              height: 45,
+              height: 50,
               margin:
-                  const EdgeInsets.only(top: 0, left: 15, bottom: 15, right: 15),
-              child: TextFormField( decoration:  InputDecoration(
-                  
+                  const EdgeInsets.only(top: 0, left: 15, bottom: 0, right: 15),
+              child: TextFormField(
+                onChanged: (value) {
+                  if (value.isNotEmpty && nameEmpty) {
+                    setState(() {
+                      nameEmpty = false;
+                    });
+                  }
+                },
+                controller: name,
+                decoration: InputDecoration(
                   border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(32.0)),
                   ),
@@ -85,30 +100,50 @@ class _SignupState extends ConsumerState<Signup> {
                     borderRadius: BorderRadius.all(Radius.circular(6)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color:  HexColor("105DFB"), width: 2.0),
+                    borderSide:
+                        BorderSide(color: HexColor("105DFB"), width: 2.0),
                     borderRadius: const BorderRadius.all(Radius.circular(6.0)),
                   ),
-                ),),
+                ),
+              ),
             ),
+            nameEmpty
+                ? Container(
+                    margin:
+                        const EdgeInsets.only(left: 15, bottom: 15, right: 15),
+                    child: Text(
+                      '*required',
+                      style: GoogleFonts.lato(
+                          fontSize: 16,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : const SizedBox(
+                    height: 15,
+                  ),
             Container(
               margin:
                   const EdgeInsets.only(top: 5, left: 15, bottom: 5, right: 15),
               child: Text(
                 'Email',
                 style: GoogleFonts.lato(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal),
+                    fontSize: 18, fontWeight: FontWeight.normal),
               ),
             ),
             Container(
-               height: 45,
-              margin:
-                  const EdgeInsets.only(top: 0, left: 15, bottom: 15, right: 15),
+              height: 50,
+              margin: const EdgeInsets.only(top: 0, left: 15, right: 15),
               child: TextFormField(
-                decoration:  InputDecoration(
-                  
+                onChanged: (value) {
+                  if (value.isNotEmpty && emailEmpty) {
+                    setState(() {
+                      emailEmpty = false;
+                    });
+                  }
+                },
+                controller: email,
+                decoration: InputDecoration(
                   border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(32.0)),
                   ),
@@ -118,30 +153,51 @@ class _SignupState extends ConsumerState<Signup> {
                     borderRadius: BorderRadius.all(Radius.circular(6)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color:  HexColor("105DFB"), width: 2.0),
+                    borderSide:
+                        BorderSide(color: HexColor("105DFB"), width: 2.0),
                     borderRadius: const BorderRadius.all(Radius.circular(6.0)),
                   ),
                 ),
               ),
             ),
+            emailEmpty
+                ? Container(
+                    margin:
+                        const EdgeInsets.only(left: 15, bottom: 15, right: 15),
+                    child: Text(
+                      '*required',
+                      style: GoogleFonts.lato(
+                          fontSize: 16,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : const SizedBox(
+                    height: 15,
+                  ),
             Container(
               margin:
                   const EdgeInsets.only(top: 5, left: 15, bottom: 5, right: 15),
               child: Text(
                 'Password',
                 style: GoogleFonts.lato(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal),
+                    fontSize: 18, fontWeight: FontWeight.normal),
               ),
             ),
             Container(
-               height: 45,
+              height: 50,
               margin:
-                  const EdgeInsets.only(top: 0, left: 15, bottom: 20, right: 15),
-              child: TextFormField( decoration:  InputDecoration(
-                  
+                  const EdgeInsets.only(top: 0, left: 15, bottom: 0, right: 15),
+              child: TextFormField(
+                onChanged: (value) {
+                  if (value.isNotEmpty && passwordEmpty) {
+                    setState(() {
+                      passwordEmpty = false;
+                    });
+                  }
+                },
+                controller: password,
+                decoration: InputDecoration(
                   border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(32.0)),
                   ),
@@ -151,42 +207,91 @@ class _SignupState extends ConsumerState<Signup> {
                     borderRadius: BorderRadius.all(Radius.circular(6)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                        color:  HexColor("105DFB"), width: 2.0),
+                    borderSide:
+                        BorderSide(color: HexColor("105DFB"), width: 2.0),
                     borderRadius: const BorderRadius.all(Radius.circular(6.0)),
                   ),
-                ),),
-            ),
-                 InkWell(
-            onTap: () {
-               Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (ctx) => const Homepage()));
-            },
-            child: Container(
-              height: 45,
-              margin: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                  color: HexColor("105DFB"),
-                  borderRadius: BorderRadius.circular(6)),
-              alignment: Alignment.center,
-              width: MediaQuery.of(context).size.width,
-              child: Text(
-                'Register',
-                style: GoogleFonts.lato(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500),
+                ),
               ),
             ),
-          ),
-           InkWell(
-            onTap: (){
-              ref.read(Const.inst).signup_signin_index = 0;
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (ctx) => const Signin()));
-            },
-             child: Container(
-              alignment: Alignment.center,
+            passwordEmpty
+                ? Container(
+                    margin:
+                        const EdgeInsets.only(left: 15, bottom: 20, right: 15),
+                    child: Text(
+                      '*required',
+                      style: GoogleFonts.lato(
+                          fontSize: 16,
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : const SizedBox(
+                    height: 20,
+                  ),
+            GestureDetector(
+              onTap: () async {
+                if (loading) return;
+                if (email.text.isEmpty ||
+                    password.text.isEmpty ||
+                    name.text.isEmpty) {
+                  if (email.text.isEmpty) emailEmpty = true;
+                  if (password.text.isEmpty) passwordEmpty = true;
+                  if (name.text.isEmpty) nameEmpty = true;
+                  setState(() {});
+                } else {
+                  setState(() {
+                    loading = true;
+                  });
+                  await prov
+                      .register(email: email.text, password: password.text,name:name.text)
+                      .then((value) {
+                          prov.getAllPasswords();
+                    Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (ctx) => const Homepage()),
+                        (route) => false);
+                  }).catchError((error){
+                       setState(() {
+                      loading = false;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please try again later!')));
+                  });
+                }
+              },
+              child: Container(
+                height: 45,
+                margin: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                    color: HexColor("105DFB"),
+                    borderRadius: BorderRadius.circular(6)),
+                alignment: Alignment.center,
+                width: MediaQuery.of(context).size.width,
+                child: loading
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                          backgroundColor: Colors.white,
+                          strokeWidth: 3,
+                        ),
+                      )
+                    : Text(
+                        'Register',
+                        style: GoogleFonts.lato(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500),
+                      ),
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (ctx) => const Signin()));
+              },
+              child: Container(
+                alignment: Alignment.center,
                 child: Text(
                   'Already have an account?',
                   style: GoogleFonts.lato(
@@ -195,7 +300,7 @@ class _SignupState extends ConsumerState<Signup> {
                       fontWeight: FontWeight.normal),
                 ),
               ),
-           ),
+            ),
           ],
         ),
       ),

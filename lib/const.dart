@@ -4,5 +4,8 @@ import 'package:my_cred/provider.dart';
 class Const {
   static ChangeNotifierProvider<Providerr> inst =
       ChangeNotifierProvider<Providerr>(((ref) => Providerr()));
-  static const String token ="";
+  static String token = "";
+  static bool isLogged = false;
+  static String name = "";
+   static String email = "";
 }

@@ -15,6 +15,13 @@ void main() async {
   ));
   var inst = await SharedPreferences.getInstance();
   prefs = inst;
+  if (inst.containsKey("token") && inst.containsKey("isLogged")) {
+    Const.isLogged = inst.getBool("isLogged")!;
+    Const.token = inst.getString("token")!;
+    Const.name = inst.getString("name")!;
+    Const.email = inst.getString("email")!;
+    print(Const.token);
+  }
   if (!inst.containsKey('dark')) {
     await inst.setBool("dark", false);
   }
@@ -31,6 +38,9 @@ class MyApp extends ConsumerStatefulWidget {
 class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
+    if (Const.isLogged) {
+      ref.read(Const.inst).getAllPasswords();
+    }
     ref.read(Const.inst).prefs = prefs;
     ref.read(Const.inst).darkMode = prefs!.getBool('dark')!;
     super.initState();
@@ -41,13 +51,14 @@ class _MyAppState extends ConsumerState<MyApp> {
     var prov = ref.watch(Const.inst);
 
     return MaterialApp(
+      showPerformanceOverlay: true,
         debugShowCheckedModeBanner: false,
         title: 'My cred',
         theme: ThemeData(
           primarySwatch: MaterialColor(
             HexColor("105DFB").value,
-             <int, Color>{
-              50:  Color(HexColor("105DFB").value),
+            <int, Color>{
+              50: Color(HexColor("105DFB").value),
               100: const Color(0xFFFFFFFF),
               200: const Color(0xFFFFFFFF),
               300: const Color(0xFFFFFFFF),
@@ -72,7 +83,7 @@ class _MyAppState extends ConsumerState<MyApp> {
               prov.darkMode ? const Color(0xff280C0B) : const Color(0xffEECED3),
 
           highlightColor:
-              prov.darkMode ?  Colors.transparent : Colors.transparent ,
+              prov.darkMode ? Colors.transparent : Colors.transparent,
           hoverColor:
               prov.darkMode ? const Color(0xff3A3A3B) : const Color(0xff4285F4),
 
@@ -91,6 +102,11 @@ class _MyAppState extends ConsumerState<MyApp> {
             elevation: 0.0,
             backgroundColor: prov.darkMode ? Colors.black : Colors.white,
             toolbarTextStyle: GoogleFonts.ptSans(
+              color: prov.darkMode ? Colors.white : Colors.black,
+            ),
+            titleTextStyle: GoogleFonts.ptSans(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
               color: prov.darkMode ? Colors.white : Colors.black,
             ),
             iconTheme: IconThemeData(
