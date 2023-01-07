@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,7 +23,7 @@ class _ProfileState extends ConsumerState<Profile> {
   Widget build(BuildContext context) {
     if(index==0)
     index++;
-    var prov = ref.watch(Const.inst);
+    var prov = ref.watch(Const.firebase);
     return Scaffold(
       floatingActionButton: SizedBox(
         child: GestureDetector(
@@ -68,7 +70,7 @@ class _ProfileState extends ConsumerState<Profile> {
                 right: 15,
               ),
               child: Text(
-                Const.name,
+                FirebaseAuth.instance.currentUser!.displayName!,
                 style: GoogleFonts.ptSans(
                     fontSize: 20, fontWeight: FontWeight.bold),
               ),
@@ -76,7 +78,7 @@ class _ProfileState extends ConsumerState<Profile> {
             Container(
               margin: const EdgeInsets.only(left: 20, right: 15),
               child: Text(
-                Const.email,
+                 FirebaseAuth.instance.currentUser!.email!,
                 style: GoogleFonts.ptSans(
                     color: Colors.grey.shade500,
                     fontSize: 18,

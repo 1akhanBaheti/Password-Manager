@@ -25,7 +25,7 @@ class _SignupState extends ConsumerState<Signup> {
       loading = false;
   @override
   Widget build(BuildContext context) {
-    var prov = ref.watch(Const.inst);
+    var prov = ref.watch(Const.firebase);
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -244,18 +244,28 @@ class _SignupState extends ConsumerState<Signup> {
                     loading = true;
                   });
                   await prov
-                      .register(email: email.text, password: password.text,name:name.text)
+                      .register(
+                          email: email.text,
+                          password: password.text,
+                          name: name.text)
                       .then((value) {
-                          prov.getAllPasswords();
+                      prov.getAllPasswords();
                     Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (ctx) => const Homepage()),
                         (route) => false);
-                  }).catchError((error){
-                       setState(() {
+                  }).catchError((error) {
+                    setState(() {
                       loading = false;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please try again later!')));
+                    String message = "";
+                    if (error.code == "invalid-email")
+                      message = "Invalid email";
+                    else if (error.code == "email-already-in-use")
+                      message = "User already exists";
+                    else
+                      message = error.message;
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(message)));
                   });
                 }
               },

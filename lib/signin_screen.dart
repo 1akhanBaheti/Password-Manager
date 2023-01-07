@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -22,7 +23,7 @@ class _SigninState extends ConsumerState<Signin> {
   bool passwordEmpty = false;
   @override
   Widget build(BuildContext context) {
-    var prov = ref.read(Const.inst);
+    var prov = ref.read(Const.firebase);
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -190,7 +191,7 @@ class _SigninState extends ConsumerState<Signin> {
                   await prov
                       .login(email: email.text, password: password.text)
                       .then((value) {
-                    prov.getAllPasswords();
+                    //prov.getAllPasswords();
                     Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (ctx) => const Homepage()),
                         (route) => false);
@@ -198,8 +199,13 @@ class _SigninState extends ConsumerState<Signin> {
                     setState(() {
                       loading = false;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(content: Text("Try again later!")));
+                    String message = "";
+                    if (error.code == "user-not-found")
+                      message = "User doesn't exists";
+                    else if (error.code == "invalid-email")
+                      message = "User with this email not exists";
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(message)));
                   });
                 }
               },

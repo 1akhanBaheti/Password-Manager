@@ -1,3 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,18 +12,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 SharedPreferences? prefs;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: HexColor("105DFB"),
   ));
   var inst = await SharedPreferences.getInstance();
   prefs = inst;
-  if (inst.containsKey("token") && inst.containsKey("isLogged")) {
-    Const.isLogged = inst.getBool("isLogged")!;
-    Const.token = inst.getString("token")!;
-    Const.name = inst.getString("name")!;
-    Const.email = inst.getString("email")!;
-    print(Const.token);
-  }
+  // if (inst.containsKey("token") && inst.containsKey("isLogged")) {
+  //   Const.isLogged = inst.getBool("isLogged")!;
+  //   Const.token = inst.getString("token")!;
+  //   Const.name = inst.getString("name")!;
+  //   Const.email = inst.getString("email")!;
+  //   print(Const.token);
+  // }
   if (!inst.containsKey('dark')) {
     await inst.setBool("dark", false);
   }
@@ -38,20 +41,20 @@ class MyApp extends ConsumerStatefulWidget {
 class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
-    if (Const.isLogged) {
-      ref.read(Const.inst).getAllPasswords();
+    if (FirebaseAuth.instance.currentUser!=null) {
+      ref.read(Const.firebase).getAllPasswords();
     }
-    ref.read(Const.inst).prefs = prefs;
-    ref.read(Const.inst).darkMode = prefs!.getBool('dark')!;
+    ref.read(Const.firebase).prefs = prefs;
+    ref.read(Const.firebase).darkMode = prefs!.getBool('dark')!;
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    var prov = ref.watch(Const.inst);
+    var prov = ref.watch(Const.firebase);
 
     return MaterialApp(
-      showPerformanceOverlay: true,
+        //showPerformanceOverlay: true,
         debugShowCheckedModeBanner: false,
         title: 'My cred',
         theme: ThemeData(

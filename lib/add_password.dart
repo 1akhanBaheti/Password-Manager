@@ -38,9 +38,9 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
   void initState() {
     if (widget.edit) {
       currentStrength =
-          ref.read(Const.inst).passwordAnalysis.strengths[widget.index];
-      var data = ref.read(Const.inst).passwords[widget.index];
-      generate.text = data["dec_password"];
+          ref.read(Const.firebase).passwordAnalysis.strengths[widget.index];
+      var data = ref.read(Const.firebase).passwords[widget.index];
+      generate.text = data["password"];
       generate.selection = TextSelection.fromPosition(
           TextPosition(offset: generate.text.length));
       title.text = data["title"] ?? '';
@@ -61,10 +61,7 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
 
   @override
   Widget build(BuildContext context) {
-    Map i = {};
-    List j = [];
-
-    var prov = ref.read(Const.inst);
+    var prov = ref.read(Const.firebase);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -206,11 +203,8 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Container(
-                    margin:  EdgeInsets.only(
-                      left: 20,
-                      right: 15,
-                      bottom: wesiteUrlEmpty ? 20 : 0
-                    ),
+                    margin: EdgeInsets.only(
+                        left: 20, right: 15, bottom: wesiteUrlEmpty ? 20 : 0),
                     child: Text(
                       'website',
                       style: GoogleFonts.ptSans(
@@ -257,7 +251,8 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                     ],
                   ),
                   Container(
-                      margin:  EdgeInsets.only(right: 20, left: 20,bottom: wesiteUrlEmpty ? 20 : 0),
+                      margin: EdgeInsets.only(
+                          right: 20, left: 20, bottom: wesiteUrlEmpty ? 20 : 0),
                       height: 18,
                       width: 18,
                       decoration: BoxDecoration(
@@ -552,14 +547,14 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        generate.text = ref.read(Const.inst).randomPassword(
+                        generate.text = ref.read(Const.firebase).randomPassword(
                             letters: lowecase,
                             number: numbers,
                             uppercase: uppercase,
                             specialChar: symbols,
                             passwordLength: sliderValue);
                         currentStrength = ref
-                            .read(Const.inst)
+                            .read(Const.firebase)
                             .estimateBruteforceStrength(generate.text);
                       });
                     },
@@ -609,6 +604,7 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                           await prov.editPassword({
                             "title": title.text,
                             "password": generate.text,
+                            "id": prov.passwords[widget.index]["id"],
                             if (notes.text.isNotEmpty)
                               "description": notes.text,
                             if (email.text.isNotEmpty)
@@ -616,19 +612,18 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                             if (website.text.isNotEmpty)
                               "site_url": website.text,
                             if (website.text.isNotEmpty && url != null)
-                              "meta": {"url": url.url},
+                              "url": url.url,
                           }, widget.index).then((value) {
                             Fluttertoast.showToast(
-                                  msg: 'Updated!',
-                                  textColor: Colors.black,
-                                  backgroundColor: Colors.white);
+                                msg: 'Updated!',
+                                textColor: Colors.black,
+                                backgroundColor: Colors.white);
                             Navigator.pop(context);
                           }).catchError((error) {
                             Fluttertoast.showToast(
-                                  msg: 'Something went wrong!',
-                                  textColor: Colors.black,
-                                  backgroundColor: Colors.white);
-                          
+                                msg: 'Something went wrong!',
+                                textColor: Colors.black,
+                                backgroundColor: Colors.white);
                           });
                           setState(() {
                             saving = false;
@@ -642,6 +637,7 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                           await prov.savePassword({
                             "title": title.text,
                             "password": generate.text,
+                            "id":DateTime.now().toString(),
                             if (notes.text.isNotEmpty)
                               "description": notes.text,
                             if (email.text.isNotEmpty)
@@ -649,20 +645,20 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                             if (website.text.isNotEmpty)
                               "site_url": website.text,
                             if (website.text.isNotEmpty && url != null)
-                              "meta": {"url": url.url},
+                              "url": url.url
                           }).then((value) {
-                             Fluttertoast.showToast(
-                                  msg: 'Saved!',
-                                  textColor: Colors.black,
-                                  backgroundColor: Colors.white);
-                      
+                            Fluttertoast.showToast(
+                                msg: 'Saved!',
+                                textColor: Colors.black,
+                                backgroundColor: Colors.white);
+
                             Navigator.pop(context);
                           }).catchError((error) {
                             print(error.toString());
                             Fluttertoast.showToast(
-                                  msg: 'Something went wrong!',
-                                  textColor: Colors.black,
-                                  backgroundColor: Colors.white);
+                                msg: 'Something went wrong!',
+                                textColor: Colors.black,
+                                backgroundColor: Colors.white);
                           });
 
                           setState(() {
@@ -698,7 +694,6 @@ class _AddPasswordState extends ConsumerState<AddPassword> {
                   ),
                 ],
               ),
-             
             ],
           ),
         ),

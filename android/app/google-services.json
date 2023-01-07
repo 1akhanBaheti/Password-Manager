@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "651739187317",
+    "project_id": "mycred-aff7f",
+    "storage_bucket": "mycred-aff7f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:651739187317:android:585fcb6baf7cc78b62d03c",
+        "android_client_info": {
+          "package_name": "com.example.my_cred"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "651739187317-u554d5ill6rklku9oc49lm0114pt1urb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALswp1-qEkP4R7GMZomBGiXouIyCuqxP8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "651739187317-u554d5ill6rklku9oc49lm0114pt1urb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

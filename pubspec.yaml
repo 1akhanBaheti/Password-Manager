@@ -51,6 +51,10 @@ dependencies:
   cupertino_icons: ^1.0.2
   shared_preferences: ^2.0.15
   flutter_native_splash: ^2.2.0+1
+  firebase_auth: ^4.2.2
+  firebase_core: ^2.4.1
+  firebase_database: ^10.0.9
+  cloud_firestore: ^4.3.1
 
 dev_dependencies:
   flutter_test:

@@ -41,7 +41,7 @@ class _HomepageState extends ConsumerState<Homepage>
 
   @override
   Widget build(BuildContext context) {
-    var prov = ref.watch(Const.inst);
+    var prov = ref.watch(Const.firebase);
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: prov.darkMode ? null : Colors.white,
@@ -190,7 +190,7 @@ class _HomepageState extends ConsumerState<Homepage>
   }
 
   passwords() {
-    var prov = ref.watch(Const.inst);
+    var prov = ref.watch(Const.firebase);
     return prov.passwords.isNotEmpty
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +211,7 @@ class _HomepageState extends ConsumerState<Homepage>
                 child: TextFormField(
                     controller: search,
                     onChanged: (value) {
-                      prov.search(value.trim());
+                    //  prov.search(value.trim());
                     },
                     cursorColor: const Color.fromRGBO(16, 93, 251, 1),
                     decoration: InputDecoration(
@@ -243,9 +243,8 @@ class _HomepageState extends ConsumerState<Homepage>
                     child: ListView.builder(
                         shrinkWrap: true,
                         physics: const BouncingScrollPhysics(),
-                        itemCount: search.text.trim().isEmpty
-                            ? prov.passwords.length
-                            : prov.searchedList.length,
+                        itemCount: prov.passwords.length,
+                           
                         itemBuilder: (ctx, index) {
                           return GestureDetector(
                             onTap: () {
@@ -258,9 +257,8 @@ class _HomepageState extends ConsumerState<Homepage>
                               // ignore: sort_child_properties_last
                               child: ListTile(
                                   title: Text(
-                                    search.text.trim().isEmpty
-                                        ? prov.passwords[index]["title"]
-                                        : prov.searchedList[index]["title"],
+                                     prov.passwords[index]["title"],
+                                       
                                     style: GoogleFonts.lato(
                                         fontSize: 17,
                                         fontWeight: FontWeight.w500),
@@ -271,43 +269,31 @@ class _HomepageState extends ConsumerState<Homepage>
                                       width: 50,
                                       decoration: BoxDecoration(
                                           image: 
-                                          search.text.isEmpty?
-                                          (
-                                          prov.passwords[index]["meta"]["url"] != null
+                                          
+                                          prov.passwords[index]["url"] != null
                                               ? DecorationImage(
                                                   fit: BoxFit.cover,
                                                   image: CachedNetworkImageProvider(
                                                       prov.passwords[index]
-                                                          ["meta"]["url"]))
-                                              : null):
-                                              prov.searchedList[index]["meta"]["url"] != null
-                                              ? DecorationImage(
-                                                  fit: BoxFit.cover,
-                                                  image: CachedNetworkImageProvider(
-                                                      prov.searchedList[index]
-                                                          ["meta"]["url"])):null,
+                                                          ["url"]))
+                                              : null,
                                           borderRadius:
                                               BorderRadius.circular(60)),
                                       child: 
                                       
-                                       search.text.isEmpty?(prov.passwords[index]["meta"]["url"] ==
-                                              null
-                                          ? Icon(Icons.password_outlined)
-                                          : null):(
-                                            prov.searchedList[index]["meta"]["url"] ==
+                                       prov.passwords[index]["url"] ==
                                               null
                                           ? Icon(Icons.password_outlined)
                                           : null
-                                          )
                                           
                                           ),
                                   subtitle: Text(
-                                      search.text.trim().isEmpty ? (prov.passwords[index]["site_username"] ?? prov.passwords[index]["dec_password"] ):(prov.searchedList[index]["site_username"] ?? prov.searchedList[index]["dec_password"] ),
+                                   (prov.passwords[index]["site_username"] ?? prov.passwords[index]["password"] ),
                                       style: GoogleFonts.ptSans(fontSize: 13.5, color: Colors.grey.shade500)),
                                   trailing: GestureDetector(
                                     onTap: () {
                                         Clipboard.setData(
-                                    ClipboardData(text:prov.passwords[index]["dec_password"] ));
+                                    ClipboardData(text:prov.passwords[index]["password"] ));
                                       Fluttertoast.showToast(
                                           msg: 'copied!',
                                           textColor: Colors.black,
@@ -354,7 +340,7 @@ class _HomepageState extends ConsumerState<Homepage>
   }
 
   security() {
-    var prov = ref.read(Const.inst);
+    var prov = ref.read(Const.firebase);
     return prov.passwords.isNotEmpty
         ? MediaQuery.removePadding(
             context: context,
@@ -540,18 +526,18 @@ class _HomepageState extends ConsumerState<Homepage>
                                             width: 50,
                                             decoration: BoxDecoration(
                                                 image: prov.passwords[index]
-                                                            ["meta"]["url"] !=
+                                                            ["url"] !=
                                                         null
                                                     ? DecorationImage(
                                                         fit: BoxFit.cover,
                                                         image: CachedNetworkImageProvider(
-                                                            prov.passwords[index]
-                                                                    ["meta"]
-                                                                ["url"]))
+                                                            prov.passwords[index]["url"]
+                                                                  
+                                                                ))
                                                     : null,
                                                 borderRadius:
                                                     BorderRadius.circular(60)),
-                                            child: prov.passwords[index]["meta"]
+                                            child: prov.passwords[index]
                                                         ["url"] ==
                                                     null
                                                 ? Icon(Icons.password_outlined)
@@ -585,7 +571,7 @@ class _HomepageState extends ConsumerState<Homepage>
                                                 130,
                                         child: Text(
                                             prov.passwords[index]
-                                                ["dec_password"],
+                                                ["password"],
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: GoogleFonts.ptSans(
@@ -684,7 +670,7 @@ class _HomepageState extends ConsumerState<Homepage>
   }
 
   generator() {
-    var prov = ref.read(Const.inst);
+    var prov = ref.read(Const.firebase);
     return Column(
       children: [
         TabBar(
@@ -940,14 +926,14 @@ class _HomepageState extends ConsumerState<Homepage>
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          generate.text = ref.read(Const.inst).randomPassword(
+                          generate.text = ref.read(Const.firebase).randomPassword(
                               letters: lowecase,
                               number: numbers,
                               uppercase: uppercase,
                               specialChar: symbols,
                               passwordLength: sliderValue);
                           currentStrength = ref
-                              .read(Const.inst)
+                              .read(Const.firebase)
                               .estimateBruteforceStrength(generate.text);
                         });
                       },
@@ -977,7 +963,7 @@ class _HomepageState extends ConsumerState<Homepage>
   }
 
   checker() {
-    var prov = ref.read(Const.inst);
+    var prov = ref.read(Const.firebase);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1006,7 +992,7 @@ class _HomepageState extends ConsumerState<Homepage>
             onChanged: (value) {
               setState(() {
                 currentCheckerStrength =
-                    ref.read(Const.inst).estimateBruteforceStrength(value);
+                    ref.read(Const.firebase).estimateBruteforceStrength(value);
               });
             },
             decoration: InputDecoration(
@@ -1017,7 +1003,7 @@ class _HomepageState extends ConsumerState<Homepage>
                         strengthCheck.text = value.text!;
                   setState(() {
                 currentCheckerStrength =
-                    ref.read(Const.inst).estimateBruteforceStrength(strengthCheck.text);
+                    ref.read(Const.firebase).estimateBruteforceStrength(strengthCheck.text);
               });
                       } 
                     });

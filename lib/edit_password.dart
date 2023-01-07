@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:my_cred/add_password.dart';
 import 'package:my_cred/const.dart';
+import 'package:my_cred/custom_dialog.dart';
+import 'package:my_cred/enums.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EditPassword extends ConsumerStatefulWidget {
@@ -19,7 +21,7 @@ class _EditPasswordState extends ConsumerState<EditPassword> {
   bool deleting = false;
   @override
   Widget build(BuildContext context) {
-    var prov = ref.read(Const.inst);
+    var prov = ref.read(Const.firebase);
     return Scaffold(
       backgroundColor: prov.darkMode ? Colors.black : Colors.white,
       appBar: AppBar(
@@ -30,21 +32,30 @@ class _EditPasswordState extends ConsumerState<EditPassword> {
         actions: [
           IconButton(
               onPressed: () {
-                if (!deleting) {
-                  setState(() {
-                    deleting = true;
-                  });
-                  prov.deletePassword(widget.index).then((value) {
-                    Navigator.pop(context);
-                    Fluttertoast.showToast(msg: 'Deleted!');
-                  }).catchError((error) {
-                    setState(() {
-                      deleting = false;
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('Something went wrong!')));
-                    });
-                  });
-                }
+                showDialog(
+                    context: context,
+                    builder: (ctx) => CustomDialog(
+                        title: "Password",
+                        loadingRequired: true,
+                        condition: "DELETE",
+                        description: "Are you sure to delete password ?",
+                        yesFunction: () {
+                          prov.deletePassword(widget.index,context);
+                        },
+                        noTextColor: Colors.black,
+                        yesColor: HexColor("105DFB"),
+                        noColor: Colors.grey.shade200));
+
+                // prov.deletePassword(widget.index).then((value) {
+                //   Navigator.pop(context);
+                //   Fluttertoast.showToast(msg: 'Deleted!');
+                // }).catchError((error) {
+                //   setState(() {
+                //     deleting = false;
+                //     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                //         content: Text('Something went wrong!')));
+                //   });
+                // });
               },
               icon: const Icon(
                 Icons.delete_outlined,
@@ -64,20 +75,16 @@ class _EditPasswordState extends ConsumerState<EditPassword> {
                         height: 70,
                         width: 70,
                         decoration: BoxDecoration(
-                            image: prov.passwords[widget.index]["meta"]
-                                        ["url"] !=
-                                    null
+                            image: prov.passwords[widget.index]["url"] != null
                                 ? DecorationImage(
                                     fit: BoxFit.cover,
                                     image: CachedNetworkImageProvider(
-                                        prov.passwords[widget.index]["meta"]
-                                            ["url"]))
+                                        prov.passwords[widget.index]["url"]))
                                 : null,
                             borderRadius: BorderRadius.circular(70)),
-                        child:
-                            prov.passwords[widget.index]["meta"]["url"] == null
-                                ? Icon(Icons.password_outlined)
-                                : null),
+                        child: prov.passwords[widget.index]["url"] == null
+                            ? Icon(Icons.password_outlined)
+                            : null),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +246,7 @@ class _EditPasswordState extends ConsumerState<EditPassword> {
                       margin: const EdgeInsets.only(top: 10, left: 20),
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        prov.passwords[widget.index]["dec_password"].toString(),
+                        prov.passwords[widget.index]["password"].toString(),
                         style: GoogleFonts.ptSans(
                           color: Colors.grey.shade500,
                           fontSize: 19,
@@ -304,20 +311,21 @@ class _EditPasswordState extends ConsumerState<EditPassword> {
                 )
               ],
             ),
-            deleting?Container(
-                 width: MediaQuery.of(context).size.width,
-                     height: MediaQuery.of(context).size.height,
+            deleting
+                ? Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height,
                     color: Colors.white.withOpacity(0.5),
-            ):Container(),
+                  )
+                : Container(),
             deleting
                 ? Center(
-                  child: Container(
-                  
-                        height: 15,
-                        width: 15,
-                        child: CircularProgressIndicator(),
-                      ),
-                )
+                    child: Container(
+                      height: 15,
+                      width: 15,
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
                 : Container()
           ],
         ),

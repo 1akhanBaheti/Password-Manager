@@ -1,8 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:my_cred/const.dart';
 import 'package:my_cred/home_screen.dart';
 import 'package:my_cred/onboarding_screen.dart';
 
@@ -17,7 +17,7 @@ class _SplashState extends ConsumerState<Splash> {
   @override
   void initState() {
     Future.delayed(const Duration(milliseconds: 1200)).then((value) {
-      if(Const.isLogged)
+      if(FirebaseAuth.instance.currentUser!=null)
       {
           Navigator.of(context)
           .pushReplacement(MaterialPageRoute(builder: ((context) => const Homepage())));
@@ -70,7 +70,7 @@ class _SplashState extends ConsumerState<Splash> {
           Container(
             margin: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'Lakhan Baheti\nDakshesh Jain',
+              'Lakhan Baheti',
               style: GoogleFonts.lato(
                 color: Colors.grey.shade700,
                 fontWeight: FontWeight.w600,
