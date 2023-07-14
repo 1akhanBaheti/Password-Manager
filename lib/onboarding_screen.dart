@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:my_cred/carousel.dart';
 import 'package:my_cred/signin_screen.dart';
 import 'package:my_cred/signup_screen.dart';
 

@@ -7,7 +7,6 @@ import 'package:hexcolor/hexcolor.dart';
 import 'package:my_cred/add_password.dart';
 import 'package:my_cred/const.dart';
 import 'package:my_cred/custom_dialog.dart';
-import 'package:my_cred/enums.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EditPassword extends ConsumerStatefulWidget {

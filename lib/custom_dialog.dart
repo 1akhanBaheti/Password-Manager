@@ -4,7 +4,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_cred/const.dart';
 import 'package:my_cred/enums.dart';
-import 'package:my_cred/home_screen.dart';
 
 class CustomDialog extends ConsumerStatefulWidget {
   CustomDialog({
